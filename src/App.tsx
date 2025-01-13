@@ -14,32 +14,42 @@ function App() {
     setError('')
 
     try {
-      const response = await fetch('https://external.api.recraft.ai/v1/images/generations', {
-        method: 'POST',
+      console.log('Sending prompt:', prompt);
+      
+      const requestBody = JSON.stringify({ prompt });
+      console.log('Request body:', requestBody);
+
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',  // Verify this is actually POST
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_RECRAFT_API_KEY}`
         },
-        body: JSON.stringify({
-          prompt: prompt,
-          style: 'digital_illustration', // You can change this style as needed
-          n: 1,
-          size: '1024x1024'
-        })
-      })
+        body: requestBody
+      });
 
-      const data = await response.json()
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers));
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Response data:', data);
       
       if (data.data && data.data[0].url) {
-        setImageUrl(data.data[0].url)
+        setImageUrl(data.data[0].url);
       } else {
-        setError('Failed to generate image')
+        setError('Failed to generate image');
       }
     } catch (err) {
-      setError('Error generating image: ' + (err as Error).message)
+      console.error('Error details:', err);
+      setError('Error generating image: ' + (err as Error).message);
     } finally {
-      setIsLoading(false)
-      setPrompt('') // Clear the input
+      setIsLoading(false);
+      setPrompt('');
     }
   }
 

@@ -1,0 +1,7 @@
+CREATE TABLE image_metadata (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prompt TEXT NOT NULL,
+    style TEXT NOT NULL,
+    image_url TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

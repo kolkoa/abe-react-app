@@ -6,3 +6,12 @@ bucket = "./dist"
 
 [build.upload]
 format = "service-worker"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "image-generator-db"
+database_id = "8308585e-a508-479f-91db-eb6633b37c84"
+
+[[r2_buckets]]
+bucket_name = "image-generator-storage"
+binding = "image_generator_storage"

@@ -1,11 +1,14 @@
 import { useState } from 'react'
 import './App.css'
+import { StyleSelector } from './components/StyleSelector'
+import { RECRAFT_STYLES } from './config/styles'
 
 function App() {
   const [prompt, setPrompt] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [selectedStyle, setSelectedStyle] = useState(RECRAFT_STYLES[0].value) // Default to first style
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return
@@ -15,12 +18,16 @@ function App() {
 
     try {
       console.log('Sending prompt:', prompt);
+      console.log('Using style:', selectedStyle);
       
-      const requestBody = JSON.stringify({ prompt });
+      const requestBody = JSON.stringify({ 
+        prompt,
+        style: selectedStyle  // Use selected style instead of hardcoded value
+      });
       console.log('Request body:', requestBody);
 
       const response = await fetch('/api/generate-image', {
-        method: 'POST',  // Verify this is actually POST
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -39,8 +46,8 @@ function App() {
       const data = await response.json();
       console.log('Response data:', data);
       
-      if (data.data && data.data[0].url) {
-        setImageUrl(data.data[0].url);
+      if (data.url) {
+        setImageUrl(data.url);
       } else {
         setError('Failed to generate image');
       }
@@ -62,7 +69,7 @@ function App() {
   return (
     <div>
       <h1>Image Generator</h1>
-      <div>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         <input
           type="text"
           value={prompt}
@@ -72,9 +79,14 @@ function App() {
           style={{ padding: '8px', width: '300px' }}
           disabled={isLoading}
         />
+        <StyleSelector
+          styles={RECRAFT_STYLES}
+          selectedStyle={selectedStyle}
+          onStyleChange={setSelectedStyle}
+        />
         <button 
           onClick={handleSubmit}
-          style={{ marginLeft: '8px', padding: '8px' }}
+          style={{ padding: '8px' }}
           disabled={isLoading || !prompt.trim()}
         >
           {isLoading ? 'Generating...' : 'Submit Prompt'}

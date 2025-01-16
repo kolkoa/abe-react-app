@@ -30,6 +30,7 @@ function App() {
     setDbStatus('')
 
     try {
+      // Generate image with Recraft
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -48,6 +49,7 @@ function App() {
       const data = await response.json() as RecraftResponse;
       
       if (data.url) {
+        // Temporarily show Recraft image while uploading to R2
         setImageUrl(data.url);
 
         try {
@@ -71,6 +73,9 @@ function App() {
 
           const r2Data = await r2Response.json() as R2UploadResponse;
           setR2Status(`Saved to R2: ${r2Data.filename}`);
+
+          // Switch to serving from R2
+          setImageUrl(`/api/r2-serve/${r2Data.filename}`);
 
           // Log to D1
           setDbStatus('Logging metadata...');

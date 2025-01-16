@@ -30,7 +30,6 @@ function App() {
     setDbStatus('')
 
     try {
-      // Generate image with Recraft
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -49,7 +48,7 @@ function App() {
       const data = await response.json() as RecraftResponse;
       
       if (data.url) {
-        // Temporarily show Recraft image while uploading to R2
+        // Initially show Recraft image
         setImageUrl(data.url);
 
         try {
@@ -74,9 +73,6 @@ function App() {
           const r2Data = await r2Response.json() as R2UploadResponse;
           setR2Status(`Saved to R2: ${r2Data.filename}`);
 
-          // Switch to serving from R2
-          setImageUrl(`/api/r2-serve/${r2Data.filename}`);
-
           // Log to D1
           setDbStatus('Logging metadata...');
           const dbResponse = await fetch('/api/db-log', {
@@ -97,6 +93,18 @@ function App() {
           }
 
           setDbStatus('Metadata logged successfully');
+
+          // Verify R2 upload before switching source
+          setR2Status('Verifying R2 upload...');
+          const verifyResponse = await fetch(`/api/r2-serve/${r2Data.filename}`);
+          if (verifyResponse.ok) {
+            setImageUrl(`/api/r2-serve/${r2Data.filename}`);
+            setR2Status('Image serving from R2');
+          } else {
+            console.error('R2 serve verification failed');
+            setR2Status('R2 verification failed - showing from Recraft');
+            // Keep showing from Recraft URL
+          }
 
         } catch (uploadError) {
           console.error('Upload/logging error:', uploadError);

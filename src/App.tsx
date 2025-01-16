@@ -19,6 +19,7 @@ function App() {
   const [error, setError] = useState('')
   const [selectedStyle, setSelectedStyle] = useState(RECRAFT_STYLES[0].value)
   const [r2Status, setR2Status] = useState('')
+  const [dbStatus, setDbStatus] = useState('')
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return
@@ -26,6 +27,7 @@ function App() {
     setIsLoading(true)
     setError('')
     setR2Status('')
+    setDbStatus('')
 
     try {
       const response = await fetch('/api/generate-image', {
@@ -49,6 +51,7 @@ function App() {
         setImageUrl(data.url);
 
         try {
+          // Fetch and upload to R2
           const imageResponse = await fetch(data.url);
           const imageBlob = await imageResponse.blob();
 
@@ -68,9 +71,32 @@ function App() {
 
           const r2Data = await r2Response.json() as R2UploadResponse;
           setR2Status(`Saved to R2: ${r2Data.filename}`);
-        } catch (r2Error) {
-          console.error('R2 upload error:', r2Error);
+
+          // Log to D1
+          setDbStatus('Logging metadata...');
+          const dbResponse = await fetch('/api/db-log', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              original_url: data.url,
+              r2_filename: r2Data.filename,
+              prompt: prompt,
+              style: selectedStyle
+            })
+          });
+
+          if (!dbResponse.ok) {
+            throw new Error('Failed to log metadata');
+          }
+
+          setDbStatus('Metadata logged successfully');
+
+        } catch (uploadError) {
+          console.error('Upload/logging error:', uploadError);
           setR2Status('Failed to save to R2');
+          setDbStatus('Failed to log metadata');
         }
       } else {
         setError('Failed to generate image');
@@ -119,6 +145,8 @@ function App() {
       
       {error && <div style={{ color: 'red', marginTop: '10px' }}>{error}</div>}
       {r2Status && <div style={{ color: 'blue', marginTop: '10px' }}>{r2Status}</div>}
+      {dbStatus && <div style={{ color: 'green', marginTop: '10px' }}>{dbStatus}</div>}
+      
       {imageUrl && (
         <div style={{ marginTop: '20px' }}>
           <img src={imageUrl} alt="Generated" style={{ maxWidth: '100%' }} />

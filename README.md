@@ -1,50 +1,60 @@
-# React + TypeScript + Vite
+# Cloudflare Pages Configuration Documentation
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Setting Up Staging Environment
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+1. Create staging branch:
+```bash
+git checkout -b staging
+git push -u origin staging
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+2. Configure Cloudflare Pages branch deployments:
+   - Navigate to Pages project settings
+   - Go to Branches and deployments
+   - Set Production branch to "main"
+   - Under Preview branches, select "Custom branches"
+   - Add "staging" to included branches
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+3. Configure environment variables:
+   - In Pages project settings, add necessary environment variables
+   - Add variables to both Production and Preview environments
+   - Example: RECRAFT_API_KEY for image generation
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+4. Configure Access to Staging:
+   - Go to Access > Applications
+   - Click on your Pages application
+   - Under Policies, add a policy for preview deployments:
+     - Include your development team's email domains
+     - Ensure policy covers *.pages.dev domains
+   - Save and verify access to staging environment
+
+## Implementing R2 Storage
+
+1. Create R2 bucket:
+   - Navigate to R2 in Cloudflare dashboard
+   - Create bucket "image-generator-storage"
+   - Note bucket name for configuration
+
+2. Create R2 access tokens:
+   - In R2 settings, create two API tokens:
+     - Read/Write token for uploads
+     - Read-only token for downloads
+   - Specify access to "image-generator-storage" bucket
+
+3. Configure R2 bindings in Pages:
+   - Go to Pages project settings
+   - Navigate to Functions > R2 Bindings
+   - Add binding:
+     - Variable name: BUCKET
+     - R2 bucket: image-generator-storage
+   - Configure for both Production and Preview environments
+
+4. Implement R2 upload functionality:
+   - Create `functions/api/r2-upload.ts` for upload handling
+   - Modify frontend to handle R2 upload after image generation
+   - Test in staging environment before deploying to production
+
+5. Deploy and verify:
+   - Push changes to staging branch
+   - Verify upload functionality in preview deployment
+   - Check R2 bucket for successful file storage

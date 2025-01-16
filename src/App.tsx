@@ -96,9 +96,12 @@ function App() {
 
           // Verify R2 upload before switching source
           setR2Status('Verifying R2 upload...');
-          const verifyResponse = await fetch(`/api/r2-serve/${r2Data.filename}`);
+          const baseUrl = window.location.origin;
+          const r2Url = `${baseUrl}/api/r2-serve/${r2Data.filename}`;
+          
+          const verifyResponse = await fetch(r2Url);
           if (verifyResponse.ok) {
-            setImageUrl(`/api/r2-serve/${r2Data.filename}`);
+            setImageUrl(r2Url);
             setR2Status('Image serving from R2');
           } else {
             console.error('R2 serve verification failed');

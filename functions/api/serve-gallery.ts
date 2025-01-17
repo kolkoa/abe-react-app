@@ -12,14 +12,13 @@ export interface Env {
           `SELECT r2_url, prompt, created_at 
            FROM images 
            ORDER BY created_at DESC 
-           LIMIT 3`
+           LIMIT 12`  // Changed from 3 to 12
         )
         .all()
   
-      // Make sure we're sending an array in the data property
       return new Response(JSON.stringify({
         status: 'success',
-        data: imageData.results  // .results contains the array from D1
+        data: imageData.results
       }), {
         headers: {
           'Content-Type': 'application/json'

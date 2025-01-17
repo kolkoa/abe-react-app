@@ -123,7 +123,7 @@ export function Gallery() {
                 </div>
             </div>
 
-            {/* Simple row of 3 images */}
+            {/* Grid of 12 images */}
             <div style={{
                 margin: '20px',
                 padding: '20px',
@@ -135,17 +135,20 @@ export function Gallery() {
                 {imageError && <p style={{ color: 'red' }}>{imageError}</p>}
                 
                 <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '20px',
-                    marginTop: '20px'
+                    marginTop: '20px',
+                    maxWidth: '1200px',
+                    margin: '20px auto'
                 }}>
                     {images.map((image, index) => (
                         <div 
                             key={index}
                             style={{
-                                flex: '1',
-                                maxWidth: '300px'
+                                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                                borderRadius: '8px',
+                                overflow: 'hidden'
                             }}
                         >
                             <img 
@@ -153,24 +156,31 @@ export function Gallery() {
                                 alt={image.prompt}
                                 style={{
                                     width: '100%',
-                                    height: 'auto',
-                                    borderRadius: '4px'
+                                    aspectRatio: '1',
+                                    objectFit: 'cover'
                                 }}
                             />
-                            <p style={{
-                                margin: '8px 0',
-                                color: 'white',
-                                fontSize: '14px'
+                            <div style={{
+                                padding: '12px'
                             }}>
-                                {image.prompt}
-                            </p>
-                            <p style={{
-                                margin: '4px 0',
-                                color: '#999',
-                                fontSize: '12px'
-                            }}>
-                                {new Date(image.created_at).toLocaleDateString()}
-                            </p>
+                                <p style={{
+                                    margin: '0',
+                                    color: 'white',
+                                    fontSize: '14px',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}>
+                                    {image.prompt}
+                                </p>
+                                <p style={{
+                                    margin: '4px 0 0 0',
+                                    color: '#999',
+                                    fontSize: '12px'
+                                }}>
+                                    {new Date(image.created_at).toLocaleDateString()}
+                                </p>
+                            </div>
                         </div>
                     ))}
                 </div>

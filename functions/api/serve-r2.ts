@@ -1,53 +1,42 @@
-// functions/api/serve-gallery.ts
-export interface Env {
-    DB: D1Database
-  }
-  
-  export const onRequest: PagesFunction<Env> = async (context) => {
+export const onRequestGet = async (context: {
+    request: Request;
+    env: {
+      DB: D1Database;
+    }
+  }) => {
     try {
-      const { DB } = context.env
+      // Get the latest image from D1
+      const image = await context.env.DB.prepare(`
+        SELECT r2_url
+        FROM images
+        ORDER BY created_at DESC
+        LIMIT 1
+      `).first();
   
-      // Get 12 most recent images
-      const imageData = await DB
-        .prepare(
-          `SELECT r2_url, prompt, created_at 
-           FROM images 
-           ORDER BY created_at DESC 
-           LIMIT 12`
-        )
-        .all()
-  
-      if (!imageData.results?.length) {
-        return new Response(JSON.stringify({
-          status: 'error',
-          message: 'No images found in database'
-        }), {
-          status: 404,
-          headers: {
-            'Content-Type': 'application/json'
+      if (!image) {
+        return new Response(
+          JSON.stringify({ error: 'No images found' }), 
+          {
+            status: 404,
+            headers: { 'Content-Type': 'application/json' }
           }
-        })
+        );
       }
   
-      return new Response(JSON.stringify({
-        status: 'success',
-        data: imageData.results
-      }), {
-        headers: {
-          'Content-Type': 'application/json'
+      return new Response(
+        JSON.stringify({ url: image.r2_url }), 
+        {
+          headers: { 'Content-Type': 'application/json' }
         }
-      })
-  
+      );
     } catch (error) {
-      return new Response(JSON.stringify({
-        status: 'error',
-        message: 'Failed to serve images',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }), {
-        status: 500,
-        headers: {
-          'Content-Type': 'application/json'
+      console.error('Error serving R2 URL:', error);
+      return new Response(
+        JSON.stringify({ error: 'Failed to retrieve image URL' }), 
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
         }
-      })
+      );
     }
-  }
+  };

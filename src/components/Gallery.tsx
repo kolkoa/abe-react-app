@@ -40,7 +40,8 @@ export function Gallery() {
                 const response = await fetch('/api/serve-gallery')
                 const data = await response.json()
                 if (data.status === 'success') {
-                    setImages(data.data)
+                    // Only take the first 3 images
+                    setImages(data.data.slice(0, 3))
                 } else {
                     setImageError(data.message)
                 }
@@ -54,7 +55,7 @@ export function Gallery() {
     }, [])
     
     return (
-        <div>
+        <div style={{ minHeight: '100vh' }}>  {/* Added minHeight to prevent collapse */}
             <div style={{ 
                 display: 'flex', 
                 justifyContent: 'center',
@@ -95,70 +96,54 @@ export function Gallery() {
                 )}
             </div>
 
+            {/* Simple row of 3 images */}
             <div style={{
-                maxWidth: '1200px',
-                margin: '0 auto',
-                padding: '0 20px'
+                margin: '20px',
+                padding: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                color: 'white'
             }}>
-                {imageError && (
-                    <div style={{ color: 'red', textAlign: 'center', margin: '20px' }}>
-                        {imageError}
-                    </div>
-                )}
+                <h3>Recent Images</h3>
+                {imageError && <p style={{ color: 'red' }}>{imageError}</p>}
                 
                 <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '30px',
-                    padding: '20px 0'
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    gap: '20px',
+                    marginTop: '20px'
                 }}>
                     {images.map((image, index) => (
                         <div 
                             key={index}
                             style={{
-                                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                                borderRadius: '8px',
-                                overflow: 'hidden'
+                                flex: '1',
+                                maxWidth: '300px'
                             }}
                         >
-                            <div style={{
-                                position: 'relative',
-                                paddingBottom: '100%', // Makes it square
+                            <img 
+                                src={image.r2_url} 
+                                alt={image.prompt}
+                                style={{
+                                    width: '100%',
+                                    height: 'auto',
+                                    borderRadius: '4px'
+                                }}
+                            />
+                            <p style={{
+                                margin: '8px 0',
+                                color: 'white',
+                                fontSize: '14px'
                             }}>
-                                <img 
-                                    src={image.r2_url} 
-                                    alt={image.prompt}
-                                    style={{
-                                        position: 'absolute',
-                                        top: 0,
-                                        left: 0,
-                                        width: '100%',
-                                        height: '100%',
-                                        objectFit: 'cover'
-                                    }}
-                                />
-                            </div>
-                            <div style={{
-                                padding: '12px'
+                                {image.prompt}
+                            </p>
+                            <p style={{
+                                margin: '4px 0',
+                                color: '#999',
+                                fontSize: '12px'
                             }}>
-                                <p style={{
-                                    margin: '0',
-                                    color: 'white',
-                                    fontSize: '14px',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap'
-                                }}>
-                                    {image.prompt}
-                                </p>
-                                <p style={{
-                                    margin: '4px 0 0 0',
-                                    color: '#999',
-                                    fontSize: '12px'
-                                }}>
-                                    {new Date(image.created_at).toLocaleDateString()}
-                                </p>
-                            </div>
+                                {new Date(image.created_at).toLocaleDateString()}
+                            </p>
                         </div>
                     ))}
                 </div>

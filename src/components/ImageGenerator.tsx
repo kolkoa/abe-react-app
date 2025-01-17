@@ -119,7 +119,7 @@ export function ImageGenerator() {
           style={{
             padding: '8px 16px',
             backgroundColor: 'transparent',
-            color: 'black',
+            color: 'white',
             border: 'none',
             cursor: 'pointer'
           }}

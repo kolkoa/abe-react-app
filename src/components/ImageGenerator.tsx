@@ -1,9 +1,11 @@
 // src/components/ImageGenerator.tsx
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { StyleSelector } from './StyleSelector'
 import { RECRAFT_STYLES } from '../config/styles'
 
 export function ImageGenerator() {
+  const navigate = useNavigate()
   const [prompt, setPrompt] = useState('')
   const [imageUrl, setImageUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -113,11 +115,11 @@ export function ImageGenerator() {
         marginBottom: '20px'
       }}>
         <button 
-          onClick={() => console.log('Gallery button clicked')}
+          onClick={() => navigate('/gallery')}
           style={{
             padding: '8px 16px',
             backgroundColor: 'transparent',
-            color: 'white',
+            color: 'black',
             border: 'none',
             cursor: 'pointer'
           }}

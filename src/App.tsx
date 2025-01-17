@@ -22,6 +22,7 @@ function App() {
         style: selectedStyle
       });
 
+      // First, generate image from Recraft
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -37,9 +38,11 @@ function App() {
       const data = await response.json();
       
       if (data.url) {
+        // Temporarily show the Recraft URL while uploading to R2
         setImageUrl(data.url);
         const originalUrl = data.url;
 
+        // Upload to R2
         const imageResponse = await fetch(data.url);
         const imageBlob = await imageResponse.blob();
         
@@ -50,28 +53,39 @@ function App() {
 
         if (!uploadResponse.ok) {
           console.error('R2 upload failed:', await uploadResponse.text());
+          throw new Error('Failed to upload to R2');
+        }
+
+        const uploadData = await uploadResponse.json();
+
+        // Log to D1 only after successful R2 upload
+        const dbResponse = await fetch('/api/log-db', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            original_url: originalUrl,
+            r2_filename: uploadData.key,
+            r2_url: uploadData.url,
+            prompt,
+            style: selectedStyle
+          })
+        });
+
+        if (!dbResponse.ok) {
+          console.error('Database logging failed:', await dbResponse.text());
+          throw new Error('Failed to log to database');
+        }
+
+        // Only after successful upload and logging, fetch from R2
+        const serveResponse = await fetch('/api/serve-r2');
+        if (serveResponse.ok) {
+          const serveData = await serveResponse.json();
+          setImageUrl(serveData.url); // Update image to show from R2
         } else {
-          const uploadData = await uploadResponse.json();
-          console.log('R2 upload successful:', uploadData);
-
-          // Log to D1
-          const dbResponse = await fetch('/api/log-db', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              original_url: originalUrl,
-              r2_filename: uploadData.key,
-              r2_url: uploadData.url,
-              prompt,
-              style: selectedStyle
-            })
-          });
-
-          if (!dbResponse.ok) {
-            console.error('Database logging failed:', await dbResponse.text());
-          }
+          console.error('Failed to get R2 URL:', await serveResponse.text());
+          // Don't throw error here - image is still visible from original URL
         }
       } else {
         setError('Failed to generate image');
@@ -93,7 +107,7 @@ function App() {
 
   return (
     <div>
-      <h1>Image Generator (Staging!)</h1>
+      <h1>Image Generator</h1>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         <input
           type="text"

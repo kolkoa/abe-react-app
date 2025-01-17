@@ -38,6 +38,7 @@ function App() {
       
       if (data.url) {
         setImageUrl(data.url);
+        const originalUrl = data.url;
 
         const imageResponse = await fetch(data.url);
         const imageBlob = await imageResponse.blob();
@@ -52,6 +53,25 @@ function App() {
         } else {
           const uploadData = await uploadResponse.json();
           console.log('R2 upload successful:', uploadData);
+
+          // Log to D1
+          const dbResponse = await fetch('/api/log-db', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              original_url: originalUrl,
+              r2_filename: uploadData.key,
+              r2_url: uploadData.url,
+              prompt,
+              style: selectedStyle
+            })
+          });
+
+          if (!dbResponse.ok) {
+            console.error('Database logging failed:', await dbResponse.text());
+          }
         }
       } else {
         setError('Failed to generate image');

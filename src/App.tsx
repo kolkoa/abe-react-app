@@ -93,7 +93,7 @@ function App() {
 
   return (
     <div>
-      <h1>Image Generator (Staging)</h1>
+      <h1>Image Generator (Staging!)</h1>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
         <input
           type="text"

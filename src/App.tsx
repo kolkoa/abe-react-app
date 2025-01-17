@@ -1,7 +1,5 @@
-import { useState } from 'react'
+// src/App.tsx
 import { ImageGenerator } from './components/ImageGenerator'
-import { StyleSelector } from './components/StyleSelector'
-import { RECRAFT_STYLES } from './config/styles'
 import './App.css'
 
 function App() {

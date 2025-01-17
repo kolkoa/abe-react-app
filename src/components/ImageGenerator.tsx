@@ -109,17 +109,16 @@ export function ImageGenerator() {
     <div>
       <div style={{ 
         display: 'flex', 
-        justifyContent: 'flex-end',
+        justifyContent: 'center',
         marginBottom: '20px'
       }}>
         <button 
           onClick={() => console.log('Gallery button clicked')}
           style={{
             padding: '8px 16px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
+            backgroundColor: 'transparent',
+            color: 'black',
             border: 'none',
-            borderRadius: '4px',
             cursor: 'pointer'
           }}
         >

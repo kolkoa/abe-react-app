@@ -1,5 +1,9 @@
 // src/components/Gallery.tsx
+import { useNavigate } from 'react-router-dom'
+
 export function Gallery() {
+    const navigate = useNavigate()
+    
     return (
       <div>
         <div style={{ 
@@ -8,7 +12,7 @@ export function Gallery() {
           marginBottom: '20px'
         }}>
           <button 
-            onClick={() => console.log('Generator button clicked')}
+            onClick={() => navigate('/')}
             style={{
               padding: '8px 16px',
               backgroundColor: 'transparent',
@@ -25,4 +29,4 @@ export function Gallery() {
         <div>Gallery content coming soon...</div>
       </div>
     )
-  }
+}

@@ -6,12 +6,6 @@ export const onRequestPost = async (context: {
   } 
 }) => {
   try {
-    // Add this logging block at the start
-    console.log('Debug env variables:', {
-      R2_PUBLIC_URL: context.env.R2_PUBLIC_URL,
-      availableEnvVars: Object.keys(context.env)
-    });
-
     const imageData = await context.request.blob();
     const imageKey = `${Date.now()}-${crypto.randomUUID()}.png`;
 
@@ -20,13 +14,22 @@ export const onRequestPost = async (context: {
     });
 
     const publicUrl = `${context.env.R2_PUBLIC_URL}/${imageKey}`;
-    console.log('Generated public URL:', publicUrl);
+
+    // Create debug info
+    const debugInfo = {
+      key: imageKey,
+      url: publicUrl,
+      debug: {
+        hasR2PublicUrl: !!context.env.R2_PUBLIC_URL,
+        R2_PUBLIC_URL: context.env.R2_PUBLIC_URL,
+        availableEnvVars: Object.keys(context.env)
+      }
+    };
+
+    console.log('Debug Info:', debugInfo);
 
     return new Response(
-      JSON.stringify({
-        key: imageKey,
-        url: publicUrl
-      }), 
+      JSON.stringify(debugInfo), 
       {
         headers: {
           'Content-Type': 'application/json'
@@ -34,9 +37,19 @@ export const onRequestPost = async (context: {
       }
     );
   } catch (error) {
-    console.error('R2 upload error:', error);
+    const errorInfo = {
+      error: 'Failed to upload to R2',
+      debug: {
+        errorMessage: error.message,
+        hasR2PublicUrl: !!context.env.R2_PUBLIC_URL,
+        availableEnvVars: Object.keys(context.env)
+      }
+    };
+
+    console.error('Error Info:', errorInfo);
+
     return new Response(
-      JSON.stringify({ error: 'Failed to upload to R2' }), 
+      JSON.stringify(errorInfo), 
       {
         status: 500,
         headers: {

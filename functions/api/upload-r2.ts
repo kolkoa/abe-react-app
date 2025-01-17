@@ -6,7 +6,11 @@ export const onRequestPost = async (context: {
   } 
 }) => {
   try {
-    console.log('R2_PUBLIC_URL:', context.env.R2_PUBLIC_URL); // Add this debug line
+    // Add this logging block at the start
+    console.log('Debug env variables:', {
+      R2_PUBLIC_URL: context.env.R2_PUBLIC_URL,
+      availableEnvVars: Object.keys(context.env)
+    });
 
     const imageData = await context.request.blob();
     const imageKey = `${Date.now()}-${crypto.randomUUID()}.png`;
@@ -16,7 +20,7 @@ export const onRequestPost = async (context: {
     });
 
     const publicUrl = `${context.env.R2_PUBLIC_URL}/${imageKey}`;
-    console.log('Generated public URL:', publicUrl); // Add this debug line
+    console.log('Generated public URL:', publicUrl);
 
     return new Response(
       JSON.stringify({

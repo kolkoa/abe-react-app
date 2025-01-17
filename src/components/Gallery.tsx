@@ -40,7 +40,6 @@ export function Gallery() {
                 const response = await fetch('/api/serve-gallery')
                 const data = await response.json()
                 if (data.status === 'success') {
-                    // Only take the first 3 images
                     setImages(data.data.slice(0, 3))
                 } else {
                     setImageError(data.message)
@@ -55,7 +54,7 @@ export function Gallery() {
     }, [])
     
     return (
-        <div style={{ minHeight: '100vh' }}>  {/* Added minHeight to prevent collapse */}
+        <div style={{ minHeight: '100vh' }}>
             <div style={{ 
                 display: 'flex', 
                 justifyContent: 'center',
@@ -84,16 +83,38 @@ export function Gallery() {
                 borderRadius: '8px',
                 color: 'white'
             }}>
-                <h3>Database Connection Status</h3>
-                {dbStatus ? (
-                    <div>
-                        <p>{dbStatus.dbConnection}</p>
-                        {dbStatus.error && <p style={{ color: 'red' }}>Error: {dbStatus.error}</p>}
-                        <p>Last checked: {new Date(dbStatus.timestamp).toLocaleString()}</p>
-                    </div>
-                ) : (
-                    <p>Checking database connection...</p>
-                )}
+                <h3>Debug Information</h3>
+                <div>
+                    <h4>Database Status:</h4>
+                    {dbStatus ? (
+                        <div>
+                            <p>{dbStatus.dbConnection}</p>
+                            {dbStatus.error && <p style={{ color: 'red' }}>Error: {dbStatus.error}</p>}
+                            <p>Last checked: {new Date(dbStatus.timestamp).toLocaleString()}</p>
+                        </div>
+                    ) : (
+                        <p>Checking database connection...</p>
+                    )}
+                </div>
+
+                <div style={{ marginTop: '20px' }}>
+                    <h4>Image Data:</h4>
+                    {imageError ? (
+                        <p style={{ color: 'red' }}>{imageError}</p>
+                    ) : (
+                        <div>
+                            <p>Number of images: {images.length}</p>
+                            {images.map((image, index) => (
+                                <div key={index} style={{ marginTop: '10px' }}>
+                                    <p>Image {index + 1}:</p>
+                                    <p>URL: {image.r2_url}</p>
+                                    <p>Prompt: {image.prompt}</p>
+                                    <p>Created: {new Date(image.created_at).toLocaleString()}</p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
 
             {/* Simple row of 3 images */}
@@ -105,7 +126,6 @@ export function Gallery() {
                 color: 'white'
             }}>
                 <h3>Recent Images</h3>
-                {imageError && <p style={{ color: 'red' }}>{imageError}</p>}
                 
                 <div style={{
                     display: 'flex',

@@ -6,6 +6,8 @@ export const onRequestPost = async (context: {
   } 
 }) => {
   try {
+    console.log('R2_PUBLIC_URL:', context.env.R2_PUBLIC_URL); // Add this debug line
+
     const imageData = await context.request.blob();
     const imageKey = `${Date.now()}-${crypto.randomUUID()}.png`;
 
@@ -13,10 +15,13 @@ export const onRequestPost = async (context: {
       contentType: 'image/png'
     });
 
+    const publicUrl = `${context.env.R2_PUBLIC_URL}/${imageKey}`;
+    console.log('Generated public URL:', publicUrl); // Add this debug line
+
     return new Response(
       JSON.stringify({
         key: imageKey,
-        url: `${context.env.R2_PUBLIC_URL}/${imageKey}`
+        url: publicUrl
       }), 
       {
         headers: {

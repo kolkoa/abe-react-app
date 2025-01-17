@@ -15,21 +15,11 @@ export const onRequestPost = async (context: {
 
     const publicUrl = `${context.env.R2_PUBLIC_URL}/${imageKey}`;
 
-    // Create debug info
-    const debugInfo = {
-      key: imageKey,
-      url: publicUrl,
-      debug: {
-        hasR2PublicUrl: !!context.env.R2_PUBLIC_URL,
-        R2_PUBLIC_URL: context.env.R2_PUBLIC_URL,
-        availableEnvVars: Object.keys(context.env)
-      }
-    };
-
-    console.log('Debug Info:', debugInfo);
-
     return new Response(
-      JSON.stringify(debugInfo), 
+      JSON.stringify({
+        key: imageKey,
+        url: publicUrl
+      }), 
       {
         headers: {
           'Content-Type': 'application/json'
@@ -37,19 +27,9 @@ export const onRequestPost = async (context: {
       }
     );
   } catch (error) {
-    const errorInfo = {
-      error: 'Failed to upload to R2',
-      debug: {
-        errorMessage: error.message,
-        hasR2PublicUrl: !!context.env.R2_PUBLIC_URL,
-        availableEnvVars: Object.keys(context.env)
-      }
-    };
-
-    console.error('Error Info:', errorInfo);
-
+    console.error('R2 upload error:', error);
     return new Response(
-      JSON.stringify(errorInfo), 
+      JSON.stringify({ error: 'Failed to upload to R2' }), 
       {
         status: 500,
         headers: {

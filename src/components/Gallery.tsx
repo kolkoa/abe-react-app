@@ -14,6 +14,13 @@ interface ImageData {
   created_at: string
 }
 
+interface GalleryResponse {
+  status: string
+  data?: ImageData[]
+  message?: string
+  error?: string
+}
+
 export function Gallery() {
     const navigate = useNavigate()
     const [dbStatus, setDbStatus] = useState<DbStatus | null>(null)
@@ -40,13 +47,13 @@ export function Gallery() {
             try {
                 setFetchResponse('Attempting to fetch from /api/serve-gallery...')
                 const response = await fetch('/api/serve-gallery')
-                const data = await response.json()
+                const data: GalleryResponse = await response.json()
                 setFetchResponse(JSON.stringify(data, null, 2))
                 
-                if (data.status === 'success') {
-                    setImages(data.data.slice(0, 3))
+                if (data.status === 'success' && Array.isArray(data.data)) {
+                    setImages(data.data)
                 } else {
-                    setImageError(data.message)
+                    setImageError(data.message || 'Failed to load images')
                 }
             } catch (error) {
                 setFetchResponse(`Fetch error: ${error instanceof Error ? error.message : 'Unknown error'}`)

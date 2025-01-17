@@ -7,7 +7,7 @@ export const onRequestPost = async (context: {
 }) => {
   try {
     const imageData = await context.request.blob();
-    const imageKey = `images/${Date.now()}-${crypto.randomUUID()}.png`;
+    const imageKey = `${Date.now()}-${crypto.randomUUID()}.png`;
 
     await context.env.BUCKET.put(imageKey, imageData, {
       contentType: 'image/png'

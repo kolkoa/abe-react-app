@@ -8,9 +8,17 @@ interface DbStatus {
   timestamp: string
 }
 
+interface ImageData {
+  r2_url: string
+  prompt: string
+  created_at: string
+}
+
 export function Gallery() {
     const navigate = useNavigate()
     const [dbStatus, setDbStatus] = useState<DbStatus | null>(null)
+    const [imageData, setImageData] = useState<ImageData | null>(null)
+    const [imageError, setImageError] = useState<string | null>(null)
 
     useEffect(() => {
         const checkDatabase = async () => {
@@ -27,7 +35,22 @@ export function Gallery() {
             }
         }
 
+        const fetchImage = async () => {
+            try {
+                const response = await fetch('/api/serve-gallery')
+                const data = await response.json()
+                if (data.status === 'success') {
+                    setImageData(data.data)
+                } else {
+                    setImageError(data.message)
+                }
+            } catch (error) {
+                setImageError('Failed to fetch image')
+            }
+        }
+
         checkDatabase()
+        fetchImage()
     }, [])
     
     return (
@@ -69,6 +92,32 @@ export function Gallery() {
                     </div>
                 ) : (
                     <p>Checking database connection...</p>
+                )}
+            </div>
+
+            <div style={{
+                margin: '20px',
+                padding: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                color: 'white'
+            }}>
+                <h3>Most Recent Image</h3>
+                {imageError && <p style={{ color: 'red' }}>{imageError}</p>}
+                {imageData && (
+                    <div>
+                        <img 
+                            src={imageData.r2_url} 
+                            alt={imageData.prompt}
+                            style={{
+                                maxWidth: '100%',
+                                height: 'auto',
+                                borderRadius: '4px'
+                            }}
+                        />
+                        <p>Prompt: {imageData.prompt}</p>
+                        <p>Created: {new Date(imageData.created_at).toLocaleString()}</p>
+                    </div>
                 )}
             </div>
         </div>

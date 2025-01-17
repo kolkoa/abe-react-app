@@ -19,6 +19,7 @@ export function Gallery() {
     const [dbStatus, setDbStatus] = useState<DbStatus | null>(null)
     const [images, setImages] = useState<ImageData[]>([])
     const [imageError, setImageError] = useState<string | null>(null)
+    const [fetchResponse, setFetchResponse] = useState<string>('No fetch attempt yet')
 
     useEffect(() => {
         const checkDatabase = async () => {
@@ -37,14 +38,18 @@ export function Gallery() {
 
         const fetchImages = async () => {
             try {
+                setFetchResponse('Attempting to fetch from /api/serve-gallery...')
                 const response = await fetch('/api/serve-gallery')
                 const data = await response.json()
+                setFetchResponse(JSON.stringify(data, null, 2))
+                
                 if (data.status === 'success') {
                     setImages(data.data.slice(0, 3))
                 } else {
                     setImageError(data.message)
                 }
             } catch (error) {
+                setFetchResponse(`Fetch error: ${error instanceof Error ? error.message : 'Unknown error'}`)
                 setImageError('Failed to fetch images')
             }
         }
@@ -98,22 +103,16 @@ export function Gallery() {
                 </div>
 
                 <div style={{ marginTop: '20px' }}>
-                    <h4>Image Data:</h4>
-                    {imageError ? (
-                        <p style={{ color: 'red' }}>{imageError}</p>
-                    ) : (
-                        <div>
-                            <p>Number of images: {images.length}</p>
-                            {images.map((image, index) => (
-                                <div key={index} style={{ marginTop: '10px' }}>
-                                    <p>Image {index + 1}:</p>
-                                    <p>URL: {image.r2_url}</p>
-                                    <p>Prompt: {image.prompt}</p>
-                                    <p>Created: {new Date(image.created_at).toLocaleString()}</p>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                    <h4>Image Fetch Response:</h4>
+                    <pre style={{ 
+                        whiteSpace: 'pre-wrap',
+                        wordWrap: 'break-word',
+                        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                        padding: '10px',
+                        borderRadius: '4px'
+                    }}>
+                        {fetchResponse}
+                    </pre>
                 </div>
             </div>
 
@@ -126,6 +125,7 @@ export function Gallery() {
                 color: 'white'
             }}>
                 <h3>Recent Images</h3>
+                {imageError && <p style={{ color: 'red' }}>{imageError}</p>}
                 
                 <div style={{
                     display: 'flex',

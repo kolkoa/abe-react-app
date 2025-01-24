@@ -1,8 +1,5 @@
-// src/components/ImageGenerator.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { StyleSelector } from './StyleSelector'
-import { RECRAFT_STYLES } from '../config/styles'
 
 export function ImageGenerator() {
   const navigate = useNavigate()
@@ -10,7 +7,6 @@ export function ImageGenerator() {
   const [imageUrl, setImageUrl] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [selectedStyle, setSelectedStyle] = useState(RECRAFT_STYLES[0].value)
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return
@@ -19,12 +15,9 @@ export function ImageGenerator() {
     setError('')
 
     try {
-      const requestBody = JSON.stringify({ 
-        prompt,
-        style: selectedStyle
-      });
+      const requestBody = JSON.stringify({ prompt });
 
-      // First, generate image from Recraft
+      // Generate image from our Pod API
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -37,60 +30,50 @@ export function ImageGenerator() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
-      
-      if (data.url) {
-        // Temporarily show the Recraft URL while uploading to R2
-        setImageUrl(data.url);
-        const originalUrl = data.url;
+      // Get the image blob directly
+      const imageBlob = await response.blob();
+      // Create a temporary URL for display
+      const tempUrl = URL.createObjectURL(imageBlob);
+      setImageUrl(tempUrl);
 
-        // Upload to R2
-        const imageResponse = await fetch(data.url);
-        const imageBlob = await imageResponse.blob();
-        
-        const uploadResponse = await fetch('/api/upload-r2', {
-          method: 'POST',
-          body: imageBlob
-        });
+      // Upload to R2
+      const uploadResponse = await fetch('/api/upload-r2', {
+        method: 'POST',
+        body: imageBlob
+      });
 
-        if (!uploadResponse.ok) {
-          console.error('R2 upload failed:', await uploadResponse.text());
-          throw new Error('Failed to upload to R2');
-        }
+      if (!uploadResponse.ok) {
+        console.error('R2 upload failed:', await uploadResponse.text());
+        throw new Error('Failed to upload to R2');
+      }
 
-        const uploadData = await uploadResponse.json();
+      const uploadData = await uploadResponse.json();
 
-        // Log to D1 only after successful R2 upload
-        const dbResponse = await fetch('/api/log-db', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            original_url: originalUrl,
-            r2_filename: uploadData.key,
-            r2_url: uploadData.url,
-            prompt,
-            style: selectedStyle
-          })
-        });
+      // Log to D1 after successful R2 upload
+      const dbResponse = await fetch('/api/log-db', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          r2_filename: uploadData.key,
+          r2_url: uploadData.url,
+          prompt
+        })
+      });
 
-        if (!dbResponse.ok) {
-          console.error('Database logging failed:', await dbResponse.text());
-          throw new Error('Failed to log to database');
-        }
+      if (!dbResponse.ok) {
+        console.error('Database logging failed:', await dbResponse.text());
+        throw new Error('Failed to log to database');
+      }
 
-        // Only after successful upload and logging, fetch from R2
-        const serveResponse = await fetch('/api/serve-r2');
-        if (serveResponse.ok) {
-          const serveData = await serveResponse.json();
-          setImageUrl(serveData.url); // Update image to show from R2
-        } else {
-          console.error('Failed to get R2 URL:', await serveResponse.text());
-          // Don't throw error here - image is still visible from original URL
-        }
+      // After successful upload and logging, fetch from R2
+      const serveResponse = await fetch('/api/serve-r2');
+      if (serveResponse.ok) {
+        const serveData = await serveResponse.json();
+        setImageUrl(serveData.url); // Update image to show from R2
       } else {
-        setError('Failed to generate image');
+        console.error('Failed to get R2 URL:', await serveResponse.text());
       }
     } catch (err) {
       console.error('Error details:', err);
@@ -138,11 +121,6 @@ export function ImageGenerator() {
           placeholder="Enter your image prompt..."
           style={{ padding: '8px', width: '300px' }}
           disabled={isLoading}
-        />
-        <StyleSelector
-          styles={RECRAFT_STYLES}
-          selectedStyle={selectedStyle}
-          onStyleChange={setSelectedStyle}
         />
         <button 
           onClick={handleSubmit}

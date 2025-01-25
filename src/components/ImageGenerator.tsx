@@ -1,3 +1,4 @@
+// ImageGenerator.tsx
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -15,66 +16,21 @@ export function ImageGenerator() {
     setError('')
 
     try {
-      const requestBody = JSON.stringify({ prompt });
-
-      // Generate image from our Pod API
-      const response = await fetch('/api/generate-image', {
+      const response = await fetch('/api/images', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: requestBody
+        body: JSON.stringify({ prompt })
       });
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      // Get the image blob directly
-      const imageBlob = await response.blob();
-      // Create a temporary URL for display
-      const tempUrl = URL.createObjectURL(imageBlob);
-      setImageUrl(tempUrl);
+      const data = await response.json();
+      setImageUrl(data.url);
 
-      // Upload to R2
-      const uploadResponse = await fetch('/api/upload-r2', {
-        method: 'POST',
-        body: imageBlob
-      });
-
-      if (!uploadResponse.ok) {
-        console.error('R2 upload failed:', await uploadResponse.text());
-        throw new Error('Failed to upload to R2');
-      }
-
-      const uploadData = await uploadResponse.json();
-
-      // Log to D1 after successful R2 upload
-      const dbResponse = await fetch('/api/log-db', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          r2_filename: uploadData.key,
-          r2_url: uploadData.url,
-          prompt
-        })
-      });
-
-      if (!dbResponse.ok) {
-        console.error('Database logging failed:', await dbResponse.text());
-        throw new Error('Failed to log to database');
-      }
-
-      // After successful upload and logging, fetch from R2
-      const serveResponse = await fetch('/api/serve-r2');
-      if (serveResponse.ok) {
-        const serveData = await serveResponse.json();
-        setImageUrl(serveData.url); // Update image to show from R2
-      } else {
-        console.error('Failed to get R2 URL:', await serveResponse.text());
-      }
     } catch (err) {
       console.error('Error details:', err);
       setError('Error generating image: ' + (err as Error).message);
@@ -141,3 +97,76 @@ export function ImageGenerator() {
     </div>
   )
 }
+
+// functions/api/images.ts
+export const onRequestPost = async (context: { request: Request; env: any }) => {
+  try {
+    const { prompt } = await context.request.json();
+    
+    // Generate image from Pod API
+    const podResponse = await fetch('https://image-api.abushstable555.xyz/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ prompt })
+    });
+
+    if (!podResponse.ok) {
+      return new Response(
+        JSON.stringify({ error: 'Failed to generate image' }), 
+        { 
+          status: podResponse.status,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Get the image data
+    const imageBlob = await podResponse.blob();
+    
+    // Store in R2
+    const imageKey = `${Date.now()}-${crypto.randomUUID()}.png`;
+    await context.env.BUCKET.put(imageKey, imageBlob, {
+      contentType: 'image/png'
+    });
+
+    // Create public URL
+    const publicUrl = `${context.env.R2_PUBLIC_URL}/${imageKey}`;
+
+    // Log to database
+    await context.env.DB.prepare(`
+      INSERT INTO images (
+        r2_filename,
+        r2_url,
+        prompt,
+        created_at
+      ) VALUES (?, ?, ?, datetime('now'))
+    `).bind(
+      imageKey,
+      publicUrl,
+      prompt
+    ).run();
+
+    // Return just the R2 URL
+    return new Response(
+      JSON.stringify({ 
+        url: publicUrl,
+        success: true 
+      }),
+      { 
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+
+  } catch (error) {
+    console.error('Error:', error);
+    return new Response(
+      JSON.stringify({ error: 'Image processing failed' }),
+      { 
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+};
